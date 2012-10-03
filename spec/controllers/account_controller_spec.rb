@@ -151,6 +151,32 @@ describe AccountController do
   end
 
   describe '#lost_password' do
+    before :each do
+      Setting.stub(:lost_password?).and_return(true)
+      controller.stub(:validate_token)
+      controller.stub(:create_token)
+    end
+
+    context "when lost_password setting is not set" do
+      it "redirects to home_url" do
+        Setting.stub(:lost_password?).and_return(false)
+        get(:lost_password)
+        response.should redirect_to(home_url)
+      end
+    end
+
+    it "validates the token" do
+      controller.should_receive(:validate_token)
+      get(:lost_password)
+    end
+
+    context "when the token does not validate" do
+      it "creates a token" do
+        controller.stub(:validate_token)
+        controller.should_receive(:create_token)
+        get(:lost_password)
+      end
+    end
   end
 
   describe '#register' do
