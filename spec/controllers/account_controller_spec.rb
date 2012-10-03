@@ -82,6 +82,7 @@ describe AccountController do
     before :each do
       controller.stub(:reactivate_user)
       controller.stub(:successful_authentication)
+      controller.stub(:create_new_user)
       controller.stub(:find_user_by_identifier).and_return(true)
     end
 
@@ -96,7 +97,7 @@ describe AccountController do
       end
 
       it "tries to find the user by mail" do
-        controller.should_receive(:find_user_by_mail).and_return(true)
+        controller.should_receive(:find_user_by_mail)
         get(:rpx_token)
       end
 
