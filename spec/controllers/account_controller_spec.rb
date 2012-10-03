@@ -79,6 +79,46 @@ describe AccountController do
   end
 
   describe '#rpx_token' do
+    before :each do
+      controller.stub(:reactivate_user)
+      controller.stub(:successful_authentication)
+      controller.stub(:find_user_by_identifier).and_return(true)
+    end
+
+    it "tries to find the user by identifier" do
+      controller.should_receive(:find_user_by_identifier).and_return(true)
+      get(:rpx_token)
+    end
+
+    context "when the user is not found by identifier" do
+      before :each do
+        controller.stub(:find_user_by_identifier).and_return(false)
+      end
+
+      it "tries to find the user by mail" do
+        controller.should_receive(:find_user_by_mail).and_return(true)
+        get(:rpx_token)
+      end
+
+      context "when the user is not found by mail" do
+        it "creates a new user" do
+          controller.stub(:find_user_by_mail).and_return(false)
+          controller.should_receive(:create_new_user)
+          get(:rpx_token)
+        end
+      end
+    end
+
+    it "reactivates the user" do
+      controller.should_receive(:reactivate_user)
+      get(:rpx_token)
+    end
+
+    it "runs the successful_authentication flow" do
+      controller.stub(:reactivate_user).and_return('my message')
+      controller.should_receive(:successful_authentication).with(nil, nil, 'my message')
+      get(:rpx_token)
+    end
   end
 
   describe '#logout' do
