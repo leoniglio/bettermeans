@@ -305,6 +305,74 @@ describe AccountController do
   end
 
   describe '#register' do
+    before :each do
+      controller.stub(:check_registration).and_return(true)
+    end
+
+    context "when check_registration fails" do
+      it "redirects to home_url" do
+        controller.stub(:check_registration).and_return(false)
+        get(:register)
+        response.should redirect_to(home_url)
+      end
+    end
+
+    it "picks a plan" do
+      controller.should_receive(:pick_plan)
+      get(:register)
+    end
+
+    context "when the request is a GET" do
+      it "logs out the user and invites them to login" do
+        controller.should_receive(:logout_and_invite)
+        get(:register)
+      end
+
+      it "renders the static layout" do
+        get(:register)
+        response.layout.should == 'layouts/static'
+      end
+    end
+
+    context "when the request is not a GET" do
+      before :each do
+        controller.stub(:register_user)
+      end
+
+      it "initializes the user with their chosen plan" do
+        controller.should_receive(:initialize_user_with_plan)
+        post(:register)
+      end
+
+      context "when the user is registered from an auth source" do
+        it "does not render the static layout" do
+          controller.stub(:register_user_with_auth_source).and_return(true)
+          post(:register)
+          response.layout.should_not == 'layouts/static'
+        end
+      end
+
+      context "when the user is not registered from an auth source" do
+        before :each do
+          controller.stub(:register_user_with_auth_source)
+        end
+
+        context "when the user registered elsewise" do
+          it "does not render the static layout" do
+            controller.stub(:register_user).and_return(true)
+            post(:register)
+            response.layout.should_not == 'layouts/static'
+          end
+        end
+
+        context "when the user does not register" do
+          it "renders the static layout" do
+            post(:register)
+            response.layout.should == 'layouts/static'
+          end
+        end
+      end
+    end
   end
 
   describe '#activate' do
