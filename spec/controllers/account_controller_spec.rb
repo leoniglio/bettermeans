@@ -123,6 +123,35 @@ describe AccountController do
   end
 
   describe '#logout' do
+    let(:user) { mock_model(User) }
+
+    before :each do
+      user.stub(:delete_autologin_tokens)
+      controller.stub(:current_user).and_return(user)
+      controller.stub(:logout_user)
+    end
+
+    it "deletes the autologin cookie" do
+      request.cookies["autologin"] = 'stuff'
+      get(:logout)
+      controller.send(:cookies)[:autologin].should_not be
+    end
+
+    it "deletes autologin tokens for the current user" do
+      user.should_receive(:delete_autologin_tokens)
+      get(:logout)
+    end
+
+    it "logs out the user" do
+      controller.should_receive(:logout_user)
+      get(:logout)
+    end
+
+    it "redirects to home_url" do
+      get(:logout)
+      response.should redirect_to(home_url)
+    end
+
   end
 
   describe '#lost_password' do
